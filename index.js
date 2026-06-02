@@ -71,6 +71,14 @@ const platforms = [
     }
 ]
 
+const stairs = {
+    x: 300,
+    y: 20,
+    width: 60,
+    height: 60,
+    color: 'black'
+}
+
 // Variable para controlar el estado de las teclas
 let leftPressed = false
 let rightPressed = false
@@ -203,6 +211,16 @@ function draw() {
         player.width,
         player.height
     )
+
+    //Dibujar escalera
+    ctx.fillStyle = stairs.color
+    ctx.fillRect(
+        stairs.x,
+        stairs.y,
+        stairs.width,
+        stairs.height
+    )
+
     // Dibujar la plataforma
     platforms.forEach(platforms => {
         ctx.fillStyle = platforms.color

@@ -2,7 +2,7 @@ const canvas = document.querySelector('canvas')
 const ctx = canvas.getContext('2d')
 
 // Tamaño del canvas
-canvas.width = 430
+canvas.width = 800
 canvas.height = 700
 
 // Suelo
@@ -29,70 +29,91 @@ const player = {
 
 // Plataforma
 const platforms = [
-  { // plataforma 1
+  { // altura 1 plataforma 1
     x: 130, // Posición horizontal
     y: 600, // Posición vertical
-    width: 250, // Ancho de la plataforma
+    width: 540, // Ancho de la plataforma
     height: 20, // Alto de la plataforma
     color: 'brown' // Color de la plataforma
   },
-  { // plataforma 2
+  { // altura 2 plataforma 1
     x: 50,
     y: 500,
-    width: 250,
+    width: 300,
     height: 20,
     color: 'brown'
   },
-  { // plataforma 3
+  { // altura 2 plataforma 2
+    x: 450,
+    y: 500,
+    width: 300,
+    height: 20,
+    color: 'brown'
+  },
+  { // altura 3 plataforma 1
     x: 0,
     y: 400,
-    width: 70,
+    width: 100,
     height: 20,
     color: 'brown'
   },
-  { // plataforma 4
-    x: 150,
+  { // altura 3 plataforma 2
+    x: 700,
+    y: 400,
+    width: 100,
+    height: 20,
+    color: 'brown'
+  },
+  { // altura 4 plataforma 1
+    x: 180,
     y: 350,
-    width: 230,
+    width: 440,
     height: 20,
     color: 'brown'
   },
-  { // plataforma 5
-    x: 320,
+  { // altura 5 plataforma 1
+    x: 300,
     y: 250,
-    width: 90,
+    width: 200,
     height: 20,
     color: 'brown'
   },
-  { // plataforma 6
+  { // altura 6 plataforma 1
     x: 0,
     y: 200,
     width: 250,
     height: 20,
     color: 'brown'
   },
-  { // plataforma 7
-    x: 70,
-    y: 80,
-    width: 350,
+  { // altura 6 plataforma 
+    x: 550,
+    y: 200,
+    width: 250,
     height: 20,
     color: 'brown'
   },
-  { // plataforma 8
+  { // altura 7 plataforma 1
+    x: 70,
+    y: 80,
+    width: 660,
+    height: 20,
+    color: 'brown'
+  },
+  { // altura 8
     x: 0,
     y: -120,
     width: canvas.width,
     height: 20,
     color: 'brown'
   },
-  { // plataforma 9
+  { // altura 9
     x: 0,
     y: -320,
     width: canvas.width,
     height: 20,
     color: 'brown'
   },
-  { // plataforma 10
+  { // altura 10
     x: 0,
     y: -520,
     width: canvas.width,
@@ -103,16 +124,23 @@ const platforms = [
 
 const stairs = [
   { // stairs 1
-    x: 320,
+    x: 385,
     y: -120,
-    width: 60,
+    width: 30,
     height: 200,
     color: 'black'
   },
-  { // stairs 1
+  { // stairs 2
     x: 50,
     y: -320,
-    width: 60,
+    width: 30,
+    height: 200,
+    color: 'black'
+  },
+  { // stairs 3
+    x: 720,
+    y: -320,
+    width: 30,
     height: 200,
     color: 'black'
   }

@@ -5,6 +5,10 @@ const ctx = canvas.getContext('2d')
 canvas.width = 800
 canvas.height = 700
 
+const CAMERA_UPPER_LIMIT_PERCENTAGE = 0.35
+const CAMERA_LOWER_LIMIT_PERCENTAGE = 0.75
+const CAMERA_VELOCITY = 0.05
+
 // Suelo
 const floor = {
   x: 0,
@@ -229,12 +233,18 @@ function update() {
 
   onStairs = false
 
-  stairs.forEach(stairs => {
+  stairs.forEach(stair => {
+
+    const isLeftOfStairRightEdge = player.x < stair.x + stair.width
+    const isRightOfStairLeftEdge = player.x + player.width > stair.x
+    const isAboveStairBottomEdge = player.y < stair.y + stair.height
+    const isBelowStairTopEdge = player.y + player.height > stair.y
+
     if (
-      player.x < stairs.x + stairs.width &&
-      player.x + player.width > stairs.x &&
-      player.y < stairs.y + stairs.height &&
-      player.y + player.height > stairs.y
+      isLeftOfStairRightEdge &&
+      isRightOfStairLeftEdge &&
+      isAboveStairBottomEdge &&
+      isBelowStairTopEdge
     ) {
       onStairs = true
     }
@@ -254,33 +264,45 @@ function update() {
   }
 
   // Colisión horizontal
-  platforms.forEach(platforms => {
+  platforms.forEach(platform => {
+
+    const isLeftOfPlatformRightEdge = player.x < platform.x + platform.width
+    const isRightOfPlatformLeftEdge = player.x + player.width > platform.x
+    const isAbovePlatformBottomEdge = player.y < platform.y + platform.height
+    const isBelowPlatformTopEdge = player.y + player.height > platform.y
 
     if (
-      player.x < platforms.x + platforms.width &&
-      player.x + player.width > platforms.x &&
-      player.y < platforms.y + platforms.height &&
-      player.y + player.height > platforms.y
+      isLeftOfPlatformRightEdge &&
+      isRightOfPlatformLeftEdge &&
+      isAbovePlatformBottomEdge &&
+      isBelowPlatformTopEdge
     ) {
 
+      const playerWasLeftOfPlatform = previousX + player.width <= platform.x
+      const playerWasRightOfPlatform = previousX >= platform.x + platform.width
+
       // izquierda
-      if (previousX + player.width <= platforms.x) {
-        player.x = platforms.x - player.width
+      if (playerWasLeftOfPlatform) {
+        player.x = platform.x - player.width
       }
 
       // derecha
-      else if (previousX >= platforms.x + platforms.width) {
-        player.x = platforms.x + platforms.width
+      else if (playerWasRightOfPlatform) {
+        player.x = platform.x + platform.width
       }
     }
   })
 
   // Bordes pantalla
-  if (player.x < 0) {
+
+  const isOutsideLeftBorder = player.x < 0
+  const isOutsideRightBorder = player.x + player.width > canvas.width
+
+  if (isOutsideLeftBorder) {
     player.x = 0
   }
 
-  if (player.x + player.width > canvas.width) {
+  if (isOutsideRightBorder) {
     player.x = canvas.width - player.width
   }
 
@@ -305,53 +327,66 @@ function update() {
   canJump = false
 
   // Colisión vertical
-  platforms.forEach(platforms => {
+  platforms.forEach(platform => {
+
+    const isLeftOfPlatformRightEdge = player.x < platform.x + platform.width
+    const isRightOfPlatformLeftEdge = player.x + player.width > platform.x
+    const isAbovePlatformBottomEdge = player.y < platform.y + platform.height
+    const isBelowPlatformTopEdge = player.y + player.height > platform.y
 
     if (
-      player.x < platforms.x + platforms.width &&
-      player.x + player.width > platforms.x &&
-      player.y < platforms.y + platforms.height &&
-      player.y + player.height > platforms.y
+      isLeftOfPlatformRightEdge &&
+      isRightOfPlatformLeftEdge &&
+      isAbovePlatformBottomEdge &&
+      isBelowPlatformTopEdge
     ) {
 
-      // aterrizar
-      if (previousY + player.height <= platforms.y) {
-        player.y = platforms.y - player.height
+      const landedOnPlatform = previousY + player.height <= platform.y
+      const hitPlatformFromBelow = previousY >= platform.y + platform.height
+
+      //aterrizar
+      if (landedOnPlatform) {
+        player.y = platform.y - player.height
         player.velocityY = 0
         canJump = true
       }
 
       // golpear abajo
-      else if (previousY >= platforms.y + platforms.height) {
-        player.y = platforms.y + platforms.height
+      else if (hitPlatformFromBelow) {
+        player.y = platform.y + platform.height
         player.velocityY = 0
       }
     }
   })
 
   // Suelo
-  if (player.y + player.height > canvas.height) {
+  const isBelowFloor = player.y + player.height > canvas.height
+
+  if (isBelowFloor) {
     player.y = canvas.height - player.height
     player.velocityY = 0
     canJump = true
   }
 
   // Movimiento de camara
-  const upperLimit = canvas.height * 0.35
-  const lowerLimit = canvas.height * 0.75
+  const cameraUpperLimit = canvas.height * CAMERA_UPPER_LIMIT_PERCENTAGE
+  const cameraLowerLimit = canvas.height * CAMERA_LOWER_LIMIT_PERCENTAGE
 
   const playerScreenY = player.y - cameraY
 
   let targetCameraY = cameraY
 
-  if (playerScreenY < upperLimit) {
-    targetCameraY = player.y - upperLimit
+  const isAboveCameraUpperLimit = playerScreenY < cameraUpperLimit
+  const isBelowCameraLowerLimit = playerScreenY > cameraLowerLimit
+
+  if (isAboveCameraUpperLimit) {
+    targetCameraY = player.y - cameraUpperLimit
   }
-  else if (playerScreenY > lowerLimit) {
-    targetCameraY = player.y - lowerLimit
+  else if (isBelowCameraLowerLimit) {
+    targetCameraY = player.y - cameraLowerLimit
   }
 
-  cameraY += (targetCameraY - cameraY) * 0.05
+  cameraY += (targetCameraY - cameraY) * CAMERA_VELOCITY
 }
 
 function draw() {
@@ -367,6 +402,17 @@ function draw() {
     floor.height
   )
 
+  //Dibujar escaleras
+  stairs.forEach(stair => {
+    ctx.fillStyle = stair.color
+    ctx.fillRect(
+      stair.x,
+      stair.y - cameraY,
+      stair.width,
+      stair.height
+    )
+  })
+
   // Dibujar el personaje
   ctx.fillStyle = player.color
   ctx.fillRect(
@@ -376,25 +422,14 @@ function draw() {
     player.height
   )
 
-  //Dibujar escaleras
-  stairs.forEach(stairs => {
-    ctx.fillStyle = stairs.color
-    ctx.fillRect(
-      stairs.x,
-      stairs.y - cameraY,
-      stairs.width,
-      stairs.height
-    )
-  })
-
   // Dibujar la plataformas
-  platforms.forEach(platforms => {
-    ctx.fillStyle = platforms.color
+  platforms.forEach(platform => {
+    ctx.fillStyle = platform.color
     ctx.fillRect(
-      platforms.x,
-      platforms.y - cameraY,
-      platforms.width,
-      platforms.height
+      platform.x,
+      platform.y - cameraY,
+      platform.width,
+      platform.height
     )
   })
 }

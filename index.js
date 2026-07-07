@@ -33,7 +33,7 @@ const player = {
 }
 
 // Enemigos
-const enemies = [
+let enemies = [
   { // altura 1
     x: 200,
     y: 570, // encima de la plataforma de y=600
@@ -42,7 +42,10 @@ const enemies = [
     color: 'blue',
     speed: 1,
     direction: 1, // 1 derecha, -1 izquierda
-    changeDirectionTimer: 0
+    changeDirectionTimer: 0,
+    hit: false,
+    velocityX: 0,
+    velocityY: 0
   },
   { // altura 2
     x: 500,
@@ -52,7 +55,10 @@ const enemies = [
     color: 'blue',
     speed: 1,
     direction: -1,
-    changeDirectionTimer: 0
+    changeDirectionTimer: 0,
+    hit: false,
+    velocityX: 0,
+    velocityY: 0
   },
   { // altura 2
     x: 200,
@@ -62,7 +68,10 @@ const enemies = [
     color: 'blue',
     speed: 1,
     direction: 1,
-    changeDirectionTimer: 0
+    changeDirectionTimer: 0,
+    hit: false,
+    velocityX: 0,
+    velocityY: 0
   },
   { // altura 4
     x: 200,
@@ -72,7 +81,10 @@ const enemies = [
     color: 'blue',
     speed: 1,
     direction: 1,
-    changeDirectionTimer: 0
+    changeDirectionTimer: 0,
+    hit: false,
+    velocityX: 0,
+    velocityY: 0
   },
   { // altura 6
     x: 650,
@@ -82,7 +94,10 @@ const enemies = [
     color: 'blue',
     speed: 1,
     direction: 1,
-    changeDirectionTimer: 0
+    changeDirectionTimer: 0,
+    hit: false,
+    velocityX: 0,
+    velocityY: 0
   },
   { // altura 6
     x: 50,
@@ -92,7 +107,10 @@ const enemies = [
     color: 'blue',
     speed: 1,
     direction: 1,
-    changeDirectionTimer: 0
+    changeDirectionTimer: 0,
+    hit: false,
+    velocityX: 0,
+    velocityY: 0
   },
   { // altura 7
     x: 200,
@@ -102,7 +120,10 @@ const enemies = [
     color: 'blue',
     speed: 1,
     direction: 1,
-    changeDirectionTimer: 0
+    changeDirectionTimer: 0,
+    hit: false,
+    velocityX: 0,
+    velocityY: 0
   }
 ]
 
@@ -324,7 +345,8 @@ document.addEventListener("keydown", (event) => {
       direction: player.direction,
       color: 'gold',
       distance: 0,
-      maxDistance: 150
+      maxDistance: 150,
+      remove: false
     })
   }
 })
@@ -511,6 +533,14 @@ function update() {
 
   enemies.forEach(enemy => {
 
+    if (enemy.hit) {
+      enemy.x += enemy.velocityX
+      enemy.y += enemy.velocityY
+      enemy.velocityY += 0.4
+
+      return
+    }
+
     const enemyPlatform = getPlatformUnder(enemy)
     const playerPlatform = getPlatformUnder(player)
 
@@ -569,7 +599,39 @@ function update() {
         enemy.direction = -1
       }
     }
+
+    shots.forEach((shot) => {
+
+      const collision =
+        shot.x < enemy.x + enemy.width &&
+        shot.x + shot.width > enemy.x &&
+        shot.y < enemy.y + enemy.height &&
+        shot.y + shot.height > enemy.y
+
+      if (collision && !enemy.hit) {
+        enemy.hit = true
+        enemy.velocityY = -10
+        enemy.velocityX = shot.direction * 5
+        shot.remove = true
+      }
+
+    })
+
   })
+
+  for (let i = enemies.length - 1; i >= 0; i--) {
+
+    const enemy = enemies[i]
+
+    if (
+      enemy.y < cameraY - 200 ||
+      enemy.x < -100 ||
+      enemy.x > canvas.width + 100
+    ) {
+      enemies.splice(i, 1)
+    }
+
+  }
 
   shots.forEach((shot) => {
     shot.x += shot.speed * shot.direction
@@ -577,10 +639,12 @@ function update() {
   })
 
   for (let i = shots.length - 1; i >= 0; i--) {
-  if (shots[i].distance >= shots[i].maxDistance) {
-    shots.splice(i, 1)
+    const shot = shots[i]
+
+    if (shot.remove || shot.distance >= shot.maxDistance) {
+      shots.splice(i, 1)
+    }
   }
-}
 
 }
 

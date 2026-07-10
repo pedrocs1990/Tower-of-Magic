@@ -30,7 +30,10 @@ const player = {
   gravity: 0.5, // Fuerza de gravedad
   jumpForce: -12, // Fuerza de salto
   direction: 1, // 1 derecha, -1 izquierda
-  lifes: 3
+  lifes: 3,
+  hit: false,
+  velocityHitX: 0,
+  invulnerableTimer: 0
 }
 
 // Enemigos
@@ -312,7 +315,7 @@ let cameraY = 0
 //Disparo
 const shots = []
 
-const hearthImage = new Image ()
+const hearthImage = new Image()
 hearthImage.src = 'Imagenes/hearth.webp'
 
 // Detectar teclas presionadas
@@ -473,6 +476,22 @@ function update() {
   // Reiniciamos cada frame
   canJump = false
 
+  // Retroceso e invulnerabilidad
+  if (player.hit) {
+
+  player.x += player.velocityHitX
+
+  player.velocityHitX *= 0.95
+  player.invulnerableTimer--
+
+  if (player.invulnerableTimer <= 0) {
+    player.hit = false
+    player.velocityHitX = 0
+    player.invulnerableTimer = 0
+  }
+
+}
+
   // Colisión vertical
   platforms.forEach(platform => {
 
@@ -583,7 +602,6 @@ function update() {
     }
 
     // Mantener enemigo dentro de la plataforma
-
     if (enemyPlatform) {
 
       if (enemy.x < enemyPlatform.x) {
@@ -604,6 +622,28 @@ function update() {
       }
     }
 
+    // Colision enemigo con jugador
+    const collision =
+      player.x < enemy.x + enemy.width &&
+      player.x + player.width > enemy.x &&
+      player.y < enemy.y + enemy.height &&
+      player.y + player.height > enemy.y
+
+    if (collision && !player.hit) {
+      player.lifes--
+      player.hit = true
+      player.velocityY = -8
+
+      if (player.x < enemy.x) {
+        player.velocityHitX = -4
+      } else {
+        player.velocityHitX = 4
+      }
+
+      player.invulnerableTimer = 120
+    }
+
+    // Colision de disparos con enemigo
     shots.forEach((shot) => {
 
       const collision =
@@ -677,14 +717,22 @@ function draw() {
   })
 
   // Dibujar el personaje
-  ctx.fillStyle = player.color
-  ctx.fillRect(
-    player.x,
-    player.y - cameraY,
-    player.width,
-    player.height
-  )
+  const visible =
+    !player.hit ||
+    Math.floor(player.invulnerableTimer / 5) % 2 === 0
 
+  if (visible) {
+
+    ctx.fillStyle = player.color
+
+    ctx.fillRect(
+      player.x,
+      player.y - cameraY,
+      player.width,
+      player.height
+    )
+
+  }
   shots.forEach((shot) => {
     ctx.fillStyle = shot.color
     ctx.fillRect(

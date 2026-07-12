@@ -131,6 +131,8 @@ let enemies = [
   }
 ]
 
+const initialEnemies = structuredClone(enemies)
+
 // Plataforma
 const platforms = [
   { // altura 1 plataforma 1
@@ -321,6 +323,12 @@ const gameOverText = {
   gravity: 0.25,
   bounce: 0.65
 }
+const retryButton = {
+  x: canvas.width / 2 - 120,
+  y: canvas.height / 2 + 80,
+  width: 240,
+  height: 60
+}
 
 //Disparo
 const shots = []
@@ -384,6 +392,28 @@ document.addEventListener("keyup", (event) => {
 
   if (event.key === "ArrowDown") {
     downPressed = false
+  }
+})
+
+// Botón Volver a intentar
+canvas.addEventListener('click', (event) => {
+  if (!gameOver) {
+    return
+  }
+
+  const rect = canvas.getBoundingClientRect()
+
+  const mouseX = event.clientX - rect.left
+  const mouseY = event.clientY - rect.top
+
+  const insideButton =
+    mouseX >= retryButton.x &&
+    mouseX <= retryButton.x + retryButton.width &&
+    mouseY >= retryButton.y &&
+    mouseY <= retryButton.y + retryButton.height
+
+  if (insideButton) {
+    restartGame()
   }
 })
 
@@ -762,6 +792,34 @@ function draw() {
       gameOverText.y
     )
 
+    ctx.fillStyle = '#444'
+    ctx.fillRect(
+      retryButton.x,
+      retryButton.y,
+      retryButton.width,
+      retryButton.height
+    )
+
+    ctx.strokeStyle = 'white'
+    ctx.lineWidth = 3
+    ctx.strokeRect(
+      retryButton.x,
+      retryButton.y,
+      retryButton.width,
+      retryButton.height
+    )
+
+    ctx.fillStyle = 'white'
+    ctx.font = 'bold 28px Arial'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+
+    ctx.fillText(
+      'Volver a intentar',
+      retryButton.x + retryButton.width / 2,
+      retryButton.y + retryButton.height / 2
+    )
+
     return
   }
 
@@ -844,6 +902,35 @@ function draw() {
       30
     )
   }
+}
+
+// Funcion reinicio de juego
+function restartGame() {
+  // estado del juego
+  gameOver = false
+
+  // Jugador
+  player.x = 50
+  player.y = 630
+  player.direction = 1
+  player.velocityY = 0
+  player.velocityHitX = 0
+  player.hit = false
+  player.invulnerableTimer = 0
+  player.lifes = 3
+
+  // Cámara
+  cameraY = 0
+
+  // Disparos
+  shots.length = 0
+
+  // Enemigos
+  enemies = structuredClone(initialEnemies)
+
+  // Animación del Game Over
+  gameOverText.y = -150
+  gameOverText.velocityY = 0
 }
 
 // Corazón del juego, se ejecuta muchas veces por segundo

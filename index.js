@@ -312,6 +312,16 @@ let canJump = false
 // Movimiento de camara
 let cameraY = 0
 
+// Game Over
+let gameOver = false
+const gameOverText = {
+  y: -150,
+  targetY: canvas.height / 2,
+  velocityY: 0,
+  gravity: 0.25,
+  bounce: 0.65
+}
+
 //Disparo
 const shots = []
 
@@ -378,6 +388,28 @@ document.addEventListener("keyup", (event) => {
 })
 
 function update() {
+
+  if (gameOver) {
+
+    gameOverText.velocityY += gameOverText.gravity
+
+    gameOverText.y += gameOverText.velocityY
+
+    if (gameOverText.y >= gameOverText.targetY) {
+
+      gameOverText.y = gameOverText.targetY
+
+      gameOverText.velocityY =
+        -gameOverText.velocityY * gameOverText.bounce
+
+      if (Math.abs(gameOverText.velocityY) < 0.3) {
+        gameOverText.velocityY = 0
+      }
+
+    }
+
+    return
+  }
 
   onStairs = false
 
@@ -479,18 +511,18 @@ function update() {
   // Retroceso e invulnerabilidad
   if (player.hit) {
 
-  player.x += player.velocityHitX
+    player.x += player.velocityHitX
 
-  player.velocityHitX *= 0.95
-  player.invulnerableTimer--
+    player.velocityHitX *= 0.95
+    player.invulnerableTimer--
 
-  if (player.invulnerableTimer <= 0) {
-    player.hit = false
-    player.velocityHitX = 0
-    player.invulnerableTimer = 0
+    if (player.invulnerableTimer <= 0) {
+      player.hit = false
+      player.velocityHitX = 0
+      player.invulnerableTimer = 0
+    }
+
   }
-
-}
 
   // Colisión vertical
   platforms.forEach(platform => {
@@ -631,6 +663,15 @@ function update() {
 
     if (collision && !player.hit) {
       player.lifes--
+
+      if (player.lifes <= 0) {
+        player.lifes = 0
+        gameOver = true
+        gameOverText.y = -150
+        gameOverText.velocityY = 0
+        return
+      }
+
       player.hit = true
       player.velocityY = -8
 
@@ -695,6 +736,34 @@ function update() {
 function draw() {
   // Limpiar el canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  // Dibujar el Game Over
+  if (gameOver) {
+    ctx.fillStyle = 'black'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    ctx.fillStyle = 'white'
+    ctx.strokeStyle = 'black'
+    ctx.lineWidth = 6
+
+    ctx.font = 'bold 100px Arial'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+
+    ctx.strokeText(
+      'GAME OVER',
+      canvas.width / 2,
+      gameOverText.y
+    )
+
+    ctx.fillText(
+      'GAME OVER',
+      canvas.width / 2,
+      gameOverText.y
+    )
+
+    return
+  }
 
   // Dibujar el suelo
   ctx.fillStyle = floor.color

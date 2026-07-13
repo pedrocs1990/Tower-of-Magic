@@ -140,7 +140,13 @@ const boss = {
   speed: 1.5,
   active: false,
   shootTimer: 0,
-  shootInterval: 90
+  shootInterval: 90,
+  state: 'attacking',
+  energy: 100,
+  maxEnergy: 100,
+  attackDuration: 20000,
+  stunDuration: 5000,
+  stateStartTime: 0
 }
 
 const initialEnemies = structuredClone(enemies)
@@ -646,41 +652,90 @@ function update() {
   const playerIsOnPlatform8 =
     playerPlatform === platform8Left || playerPlatform === platform8Right
 
-  if (playerIsOnPlatform8) {
+  if (playerIsOnPlatform8 && !boss.active) {
     boss.active = true
+    boss.state = 'attacking'
+    boss.energy = boss.maxEnergy
+    boss.stateStartTime = performance.now()
+    boss.shootTimer = 0
   }
 
   if (boss.active) {
-    if (player.x < boss.x) {
-      boss.x -= boss.speed
-    }
+    const currentTime = performance.now()
+    const elapsedTime = currentTime - boss.stateStartTime
 
-    if (player.x > boss.x) {
-      boss.x += boss.speed
-    }
+    if (boss.state === 'attacking') {
 
-    if (boss.x < bossLeftLimit) {
-      boss.x = bossLeftLimit
-    }
+      // Movimiento del boss
+      if (player.x < boss.x) {
+        boss.x -= boss.speed
+      }
 
-    if (boss.x + boss.width > bossRightLimit) {
-      boss.x = bossRightLimit - boss.width
-    }
+      if (player.x > boss.x) {
+        boss.x += boss.speed
+      }
 
-    boss.shootTimer -= 1
+      // Límites horizontales
+      if (boss.x < bossLeftLimit) {
+        boss.x = bossLeftLimit
+      }
 
-    if (boss.shootTimer <= 0) {
-      bossShots.push({
-        x: boss.x + boss.width / 2 - 6,
-        y: boss.y + boss.height,
-        width: 12,
-        height: 18,
-        speed: 4,
-        color: 'red',
-        remove: false
-      })
+      if (boss.x + boss.width > bossRightLimit) {
+        boss.x = bossRightLimit - boss.width
+      }
 
-      boss.shootTimer = boss.shootInterval
+      // Vaciar energía durante 30 segundos
+      const attackProgress = elapsedTime / boss.attackDuration
+
+      boss.energy = boss.maxEnergy - boss.maxEnergy * attackProgress
+
+      if (boss.energy < 0) {
+        boss.energy = 0
+      }
+
+      // Disparos
+      boss.shootTimer -= 1
+
+      if (boss.shootTimer <= 0) {
+        bossShots.push({
+          x: boss.x + boss.width / 2 - 6,
+          y: boss.y + boss.height,
+          width: 12,
+          height: 18,
+          speed: 4,
+          color: 'red',
+          remove: false
+        })
+
+        boss.shootTimer = boss.shootInterval
+      }
+
+      // Después de 30 segundos entra en stun
+      if (elapsedTime >= boss.attackDuration) {
+        boss.state = 'stunned'
+        boss.energy = 0
+        boss.stateStartTime = currentTime
+      }
+
+    } else if (boss.state === 'stunned') {
+
+      // Durante el stun no se mueve ni dispara
+
+      const stunProgress = elapsedTime / boss.stunDuration
+
+      boss.energy = boss.maxEnergy * stunProgress
+
+      if (boss.energy > boss.maxEnergy) {
+        boss.energy = boss.maxEnergy
+      }
+
+      // Después de 10 segundos vuelve a atacar
+      if (elapsedTime >= boss.stunDuration) {
+        boss.state = 'attacking'
+        boss.energy = boss.maxEnergy
+        boss.stateStartTime = currentTime
+        boss.shootTimer = 0
+      }
     }
   }
 
@@ -1032,6 +1087,53 @@ function draw() {
     )
   })
 
+  if (boss.active) {
+    const energyBarWidth = 70
+    const energyBarHeight = 8
+
+    const energyBarX =
+      boss.x + boss.width / 2 - energyBarWidth / 2
+
+    const energyBarY =
+      boss.y - cameraY - 18
+
+    const energyPercentage =
+      boss.energy / boss.maxEnergy
+
+    // Fondo de la barra
+    ctx.fillStyle = 'black'
+
+    ctx.fillRect(
+      energyBarX - 2,
+      energyBarY - 2,
+      energyBarWidth + 4,
+      energyBarHeight + 4
+    )
+
+    // Barra vacía
+    ctx.fillStyle = '#555'
+
+    ctx.fillRect(
+      energyBarX,
+      energyBarY,
+      energyBarWidth,
+      energyBarHeight
+    )
+
+    // Energía
+    ctx.fillStyle =
+      boss.state === 'stunned'
+        ? 'cyan'
+        : 'yellow'
+
+    ctx.fillRect(
+      energyBarX,
+      energyBarY,
+      energyBarWidth * energyPercentage,
+      energyBarHeight
+    )
+  }
+
   // Dibujar la plataformas
   platforms.forEach((platform) => {
     ctx.drawImage(
@@ -1087,11 +1189,12 @@ function restartGame() {
   boss.x = 375
   boss.y = -370
   boss.active = false
-  bossShots.length = 0
+  boss.state = 'attacking'
+  boss.energy = boss.maxEnergy
+  boss.stateStartTime = 0
   boss.shootTimer = 0
-  boss.active = false
-  boss.x = 375
-  boss.y = -370
+
+  bossShots.length = 0
 }
 
 // Corazón del juego, se ejecuta muchas veces por segundo

@@ -351,7 +351,15 @@ const shots = []
 const bossShots = []
 
 const hearthImage = new Image()
-hearthImage.src = 'Imagenes/hearth.webp'
+hearthImage.src = 'Imagenes/hearth.png'
+const backgrounImage = new Image()
+backgrounImage.src = 'Imagenes/fondo.png'
+const floorImage = new Image()
+floorImage.src = 'Imagenes/suelo-castillo.png'
+const platformImage = new Image()
+platformImage.src = 'Imagenes/plataforma.png'
+const stairsImage = new Image()
+stairsImage.src = 'Imagenes/escalera.png'
 
 // Detectar teclas presionadas
 document.addEventListener("keydown", (event) => {
@@ -879,6 +887,15 @@ function draw() {
   // Limpiar el canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
+  // Fondo juego
+  ctx.drawImage(
+    backgrounImage,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  )
+
   // Dibujar el Game Over
   if (gameOver) {
     ctx.fillStyle = 'black'
@@ -936,8 +953,8 @@ function draw() {
   }
 
   // Dibujar el suelo
-  ctx.fillStyle = floor.color
-  ctx.fillRect(
+  ctx.drawImage(
+    floorImage,
     floor.x,
     floor.y - cameraY,
     floor.width,
@@ -945,9 +962,9 @@ function draw() {
   )
 
   //Dibujar escaleras
-  stairs.forEach(stair => {
-    ctx.fillStyle = stair.color
-    ctx.fillRect(
+  stairs.forEach((stair) => {
+    ctx.drawImage(
+      stairsImage,
       stair.x,
       stair.y - cameraY,
       stair.width,
@@ -1016,9 +1033,9 @@ function draw() {
   })
 
   // Dibujar la plataformas
-  platforms.forEach(platform => {
-    ctx.fillStyle = platform.color
-    ctx.fillRect(
+  platforms.forEach((platform) => {
+    ctx.drawImage(
+      platformImage,
       platform.x,
       platform.y - cameraY,
       platform.width,

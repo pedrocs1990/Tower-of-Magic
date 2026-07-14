@@ -150,7 +150,10 @@ const boss = {
   stunDuration: 5000,
   stateStartTime: 0,
   hit: false,
-  invulnerableTimer: 0
+  invulnerableTimer: 0,
+  ascending: false,
+  targetY: -370,
+  ascentSpeed: 1
 }
 
 const initialEnemies = structuredClone(enemies)
@@ -792,79 +795,102 @@ function update() {
 
   if (boss.active) {
     const currentTime = performance.now()
-    const elapsedTime = currentTime - boss.stateStartTime
 
-    if (boss.state === 'attacking') {
+    if (boss.ascending) {
 
-      // Movimiento del boss
-      if (player.x < boss.x) {
-        boss.x -= boss.speed
-      }
+      // El boss sube
+      boss.y -= boss.ascentSpeed
 
-      if (player.x > boss.x) {
-        boss.x += boss.speed
-      }
+      // Comprobar si ya ha llegado
+      if (boss.y <= boss.targetY) {
+        boss.y = boss.targetY
+        boss.ascending = false
 
-      // Límites horizontales
-      if (boss.x < bossLeftLimit) {
-        boss.x = bossLeftLimit
-      }
-
-      if (boss.x + boss.width > bossRightLimit) {
-        boss.x = bossRightLimit - boss.width
-      }
-
-      // Vaciar energía durante 30 segundos
-      const attackProgress = elapsedTime / boss.attackDuration
-
-      boss.energy = boss.maxEnergy - boss.maxEnergy * attackProgress
-
-      if (boss.energy < 0) {
-        boss.energy = 0
-      }
-
-      // Disparos
-      boss.shootTimer -= 1
-
-      if (boss.shootTimer <= 0) {
-        bossShots.push({
-          x: boss.x + boss.width / 2 - 6,
-          y: boss.y + boss.height,
-          width: 12,
-          height: 18,
-          speed: 4,
-          color: 'red',
-          remove: false
-        })
-
-        boss.shootTimer = boss.shootInterval
-      }
-
-      // Después de 30 segundos entra en stun
-      if (elapsedTime >= boss.attackDuration) {
-        boss.state = 'stunned'
-        boss.energy = 0
-        boss.stateStartTime = currentTime
-      }
-
-    } else if (boss.state === 'stunned') {
-
-      // Durante el stun no se mueve ni dispara
-
-      const stunProgress = elapsedTime / boss.stunDuration
-
-      boss.energy = boss.maxEnergy * stunProgress
-
-      if (boss.energy > boss.maxEnergy) {
-        boss.energy = boss.maxEnergy
-      }
-
-      // Después de 10 segundos vuelve a atacar
-      if (elapsedTime >= boss.stunDuration) {
+        // Empieza un nuevo ciclo de ataque
         boss.state = 'attacking'
         boss.energy = boss.maxEnergy
         boss.stateStartTime = currentTime
         boss.shootTimer = 0
+      }
+
+    } else {
+
+      const elapsedTime =
+        currentTime - boss.stateStartTime
+
+      if (boss.state === 'attacking') {
+
+        // Movimiento horizontal del boss
+        if (player.x < boss.x) {
+          boss.x -= boss.speed
+        }
+
+        if (player.x > boss.x) {
+          boss.x += boss.speed
+        }
+
+        // Límites horizontales
+        if (boss.x < bossLeftLimit) {
+          boss.x = bossLeftLimit
+        }
+
+        if (boss.x + boss.width > bossRightLimit) {
+          boss.x = bossRightLimit - boss.width
+        }
+
+        // Vaciar energía
+        const attackProgress =
+          elapsedTime / boss.attackDuration
+
+        boss.energy =
+          boss.maxEnergy -
+          boss.maxEnergy * attackProgress
+
+        if (boss.energy < 0) {
+          boss.energy = 0
+        }
+
+        // Disparos
+        boss.shootTimer--
+
+        if (boss.shootTimer <= 0) {
+          bossShots.push({
+            x: boss.x + boss.width / 2 - 6,
+            y: boss.y + boss.height,
+            width: 12,
+            height: 18,
+            speed: 4,
+            color: 'red',
+            remove: false
+          })
+
+          boss.shootTimer = boss.shootInterval
+        }
+
+        if (elapsedTime >= boss.attackDuration) {
+          boss.state = 'stunned'
+          boss.energy = 0
+          boss.stateStartTime = currentTime
+        }
+
+      } else if (boss.state === 'stunned') {
+
+        const stunProgress =
+          elapsedTime / boss.stunDuration
+
+        boss.energy =
+          boss.maxEnergy * stunProgress
+
+        if (boss.energy > boss.maxEnergy) {
+          boss.energy = boss.maxEnergy
+        }
+
+        if (elapsedTime >= boss.stunDuration) {
+          boss.state = 'attacking'
+          boss.energy = boss.maxEnergy
+          boss.stateStartTime = currentTime
+          boss.shootTimer = 0
+        }
       }
     }
   }
@@ -1067,6 +1093,20 @@ function update() {
 
         boss.hit = true
         boss.invulnerableTimer = 120
+
+        // Ha perdido su primera vida
+        if (boss.lifes === 2) {
+          boss.ascending = true
+          boss.targetY = -570
+          boss.x = 200
+        }
+
+        // Ha perdido su segunda vida
+        if (boss.lifes === 1) {
+          boss.ascending = true
+          boss.targetY = -770
+          boss.x = 375
+        }
 
         if (boss.lifes <= 0) {
           boss.lifes = 0
@@ -1468,6 +1508,7 @@ function restartGame() {
   boss.hit = false
   boss.invulnerableTimer = 0
   bossShots.length = 0
+  boss.ascending = falseboss.targetY = -370
 
   // Campos de fuerza
   forceFields.forEach((forceField) => {

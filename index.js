@@ -297,7 +297,7 @@ const platforms = [
     height: 20,
     color: 'brown'
   }
-  
+
 ]
 const platform8Left = platforms[10]
 const platform8Right = platforms[11]
@@ -347,6 +347,57 @@ const stairs = [
     height: 230,
     color: 'black'
   }
+]
+
+const forceFields = [
+  {
+    level: 8,
+    x: 375,
+    y: -120,
+    width: 50,
+    height: 12,
+    active: true
+  },
+  {
+    level: 9,
+    x: 50,
+    y: -320,
+    width: 50,
+    height: 12,
+    active: true
+  },
+  {
+    level: 9,
+    x: 700,
+    y: -320,
+    width: 50,
+    height: 12,
+    active: true
+  },
+  {
+    level: 10,
+    x: 375,
+    y: -520,
+    width: 50,
+    height: 12,
+    active: true
+  },
+  {
+    level: 11,
+    x: 50,
+    y: -720,
+    width: 50,
+    height: 12,
+    active: true
+  },
+  {
+    level: 11,
+    x: 700,
+    y: -720,
+    width: 50,
+    height: 12,
+    active: true
+  },
 ]
 
 // detectar si personaje o enemigo está en plataforma
@@ -622,6 +673,29 @@ function update() {
     player.y += player.velocityY
   }
 
+  // Colisión del jugador con campos de fuerza
+  forceFields.forEach((forceField) => {
+
+    if (!forceField.active) {
+      return
+    }
+
+    const collision =
+      player.x < forceField.x + forceField.width &&
+      player.x + player.width > forceField.x &&
+      player.y < forceField.y + forceField.height &&
+      player.y + player.height > forceField.y
+
+    const playerWasBelowForceField =
+      previousY >= forceField.y + forceField.height
+
+    if (collision && playerWasBelowForceField) {
+      player.y = forceField.y + forceField.height
+      player.velocityY = 0
+    }
+
+  })
+
   // Reiniciamos cada frame
   canJump = false
 
@@ -804,6 +878,59 @@ function update() {
       boss.invulnerableTimer = 0
     }
   }
+
+  // Actualizar campos de fuerza
+  const allEnemiesDefeated =
+    enemies.every((enemy) => {
+      return enemy.hit
+    })
+
+  forceFields.forEach((forceField) => {
+
+    if (!forceField.active) {
+      return
+    }
+
+    if (forceField.level === 8) {
+      if (allEnemiesDefeated) {
+        forceField.active = false
+      }
+    }
+
+    if (forceField.level === 9) {
+      const canPass =
+        boss.active &&
+        boss.state === 'stunned' &&
+        boss.lifes === 3
+
+      if (canPass) {
+        forceField.active = false
+      }
+    }
+
+    if (forceField.level === 10) {
+      const canPass =
+        boss.active &&
+        boss.state === 'stunned' &&
+        boss.lifes === 2
+
+      if (canPass) {
+        forceField.active = false
+      }
+    }
+
+    if (forceField.level === 11) {
+      const canPass =
+        boss.active &&
+        boss.state === 'stunned' &&
+        boss.lifes === 1
+
+      if (canPass) {
+        forceField.active = false
+      }
+    }
+
+  })
 
   enemies.forEach(enemy => {
 
@@ -1119,6 +1246,37 @@ function draw() {
     )
   })
 
+  // Dibujar campos de fuerza
+  forceFields.forEach((forceField) => {
+
+    if (!forceField.active) {
+      return
+    }
+
+    const forceFieldScreenY =
+      forceField.y - cameraY
+
+    ctx.fillStyle = 'rgba(0, 255, 255, 0.35)'
+
+    ctx.fillRect(
+      forceField.x,
+      forceFieldScreenY,
+      forceField.width,
+      forceField.height
+    )
+
+    ctx.strokeStyle = 'cyan'
+    ctx.lineWidth = 3
+
+    ctx.strokeRect(
+      forceField.x,
+      forceFieldScreenY,
+      forceField.width,
+      forceField.height
+    )
+
+  })
+
   // Dibujar el personaje
   const visible =
     !player.hit ||
@@ -1310,6 +1468,11 @@ function restartGame() {
   boss.hit = false
   boss.invulnerableTimer = 0
   bossShots.length = 0
+
+  // Campos de fuerza
+  forceFields.forEach((forceField) => {
+    forceField.active = true
+  })
 }
 
 // Corazón del juego, se ejecuta muchas veces por segundo

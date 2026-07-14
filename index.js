@@ -144,9 +144,13 @@ const boss = {
   state: 'attacking',
   energy: 100,
   maxEnergy: 100,
+  lifes: 3,
+  maxLifes: 3,
   attackDuration: 20000,
   stunDuration: 5000,
-  stateStartTime: 0
+  stateStartTime: 0,
+  hit: false,
+  invulnerableTimer: 0
 }
 
 const initialEnemies = structuredClone(enemies)
@@ -366,6 +370,8 @@ const platformImage = new Image()
 platformImage.src = 'Imagenes/plataforma.png'
 const stairsImage = new Image()
 stairsImage.src = 'Imagenes/escalera.png'
+const greenHeartImage = new Image()
+greenHeartImage.src = 'Imagenes/boss-hearth.png'
 
 // Detectar teclas presionadas
 document.addEventListener("keydown", (event) => {
@@ -739,6 +745,16 @@ function update() {
     }
   }
 
+  // Invulnerabilidad del boss
+  if (boss.hit) {
+    boss.invulnerableTimer--
+
+    if (boss.invulnerableTimer <= 0) {
+      boss.hit = false
+      boss.invulnerableTimer = 0
+    }
+  }
+
   enemies.forEach(enemy => {
 
     if (enemy.hit) {
@@ -854,6 +870,32 @@ function update() {
       }
 
     })
+
+  })
+
+  //Colision de los disparos del personaje y el boss
+  shots.forEach((shot) => {
+
+    const collision =
+      shot.x < boss.x + boss.width &&
+      shot.x + shot.width > boss.x &&
+      shot.y < boss.y + boss.height &&
+      shot.y + shot.height > boss.y
+
+    if (collision && boss.active) {
+      shot.remove = true
+
+      if (!boss.hit) {
+        boss.lifes--
+
+        boss.hit = true
+        boss.invulnerableTimer = 120
+
+        if (boss.lifes <= 0) {
+          boss.lifes = 0
+        }
+      }
+    }
 
   })
 
@@ -1067,6 +1109,27 @@ function draw() {
   })
 
   // Dibujar el boss
+  const heartSize = 18
+  const heartSpacing = 22
+
+  const totalWidth =
+    (boss.lifes - 1) * heartSpacing + heartSize
+
+  const startX =
+    boss.x + boss.width / 2 - totalWidth / 2
+
+  for (let i = 0; i < boss.lifes; i++) {
+
+    ctx.drawImage(
+      greenHeartImage,
+      startX + i * heartSpacing,
+      boss.y - cameraY - 45,
+      heartSize,
+      heartSize
+    )
+
+  }
+
   ctx.fillStyle = boss.color
 
   ctx.fillRect(
@@ -1193,7 +1256,9 @@ function restartGame() {
   boss.energy = boss.maxEnergy
   boss.stateStartTime = 0
   boss.shootTimer = 0
-
+  boss.lifes = boss.maxLifes
+  boss.hit = false
+  boss.invulnerableTimer = 0
   bossShots.length = 0
 }
 

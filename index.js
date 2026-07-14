@@ -262,13 +262,42 @@ const platforms = [
     height: 20,
     color: 'brown'
   },
-  { // altura 10
+  { // altura 10 plataforma 1
     x: 0,
     y: -520,
-    width: canvas.width,
+    width: 375,
+    height: 20,
+    color: 'brown'
+  },
+  { // altura 10 plataforma 2
+    x: 425,
+    y: -520,
+    width: 375,
+    height: 20,
+    color: 'brown'
+  },
+  { // altura 11 plataforma 1
+    x: 0,
+    y: -720,
+    width: 50,
+    height: 20,
+    color: 'brown'
+  },
+  { // altura 11 plataforma 2
+    x: 100,
+    y: -720,
+    width: 600,
+    height: 20,
+    color: 'brown'
+  },
+  { // altura 11 plataforma 3
+    x: 750,
+    y: -720,
+    width: 50,
     height: 20,
     color: 'brown'
   }
+  
 ]
 const platform8Left = platforms[10]
 const platform8Right = platforms[11]
@@ -276,23 +305,44 @@ const bossLeftLimit = 0
 const bossRightLimit = canvas.width
 
 const stairs = [
-  { // stairs 1
+  { // altura 1 stairs 1
     x: 375,
     y: -150,
     width: 50,
     height: 230,
     color: 'black'
   },
-  { // stairs 2
+  { // altura 2 stairs 1
     x: 50,
     y: -350,
     width: 50,
     height: 230,
     color: 'black'
   },
-  { // stairs 3
+  { // altura 2 stairs 2
     x: 700,
     y: -350,
+    width: 50,
+    height: 230,
+    color: 'black'
+  },
+  { // altura 3 stairs 1
+    x: 375,
+    y: -550,
+    width: 50,
+    height: 230,
+    color: 'black'
+  },
+  { // altura 4 stairs 1
+    x: 50,
+    y: -750,
+    width: 50,
+    height: 230,
+    color: 'black'
+  },
+  { // altura 4 stairs 2
+    x: 700,
+    y: -750,
     width: 50,
     height: 230,
     color: 'black'

@@ -14,8 +14,7 @@ const floor = {
   x: 0,
   y: 700,
   width: canvas.width,
-  height: 145,
-  color: 'green'
+  height: 145
 }
 
 // Personaje
@@ -153,7 +152,12 @@ const boss = {
   invulnerableTimer: 0,
   ascending: false,
   targetY: -370,
-  ascentSpeed: 1
+  ascentSpeed: 1,
+  defeated: false,
+  defeatTargetY: 0,
+  opacity: 1,
+  defeatSpeed: 0.5,
+  fadeSpeed: 0.008
 }
 
 const initialEnemies = structuredClone(enemies)
@@ -164,141 +168,121 @@ const platforms = [
     x: 130, // Posición horizontal
     y: 600, // Posición vertical
     width: 540, // Ancho de la plataforma
-    height: 20, // Alto de la plataforma
-    color: 'brown' // Color de la plataforma
+    height: 20 // Alto de la plataforma
   },
   { // altura 2 plataforma 1
     x: 50,
     y: 500,
     width: 300,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 2 plataforma 2
     x: 450,
     y: 500,
     width: 300,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 3 plataforma 1
     x: 0,
     y: 400,
     width: 100,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 3 plataforma 2
     x: 700,
     y: 400,
     width: 100,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 4 plataforma 1
     x: 180,
     y: 350,
     width: 440,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 5 plataforma 1
     x: 300,
     y: 250,
     width: 200,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 6 plataforma 1
     x: 0,
     y: 200,
     width: 250,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 6 plataforma 
     x: 550,
     y: 200,
     width: 250,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 7 plataforma 1
     x: 70,
     y: 80,
     width: 660,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 8 plataforma 1
     x: 0,
     y: -120,
     width: 375,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 8 plataforma 2
     x: 425,
     y: -120,
     width: 375,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 9 plataforma 1
     x: 0,
     y: -320,
     width: 50,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 9 plataforma 2
     x: 100,
     y: -320,
     width: 600,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 9 plataforma 3
     x: 750,
     y: -320,
     width: 50,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 10 plataforma 1
     x: 0,
     y: -520,
     width: 375,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 10 plataforma 2
     x: 425,
     y: -520,
     width: 375,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 11 plataforma 1
     x: 0,
     y: -720,
     width: 50,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 11 plataforma 2
     x: 100,
     y: -720,
     width: 600,
-    height: 20,
-    color: 'brown'
+    height: 20
   },
   { // altura 11 plataforma 3
     x: 750,
     y: -720,
     width: 50,
-    height: 20,
-    color: 'brown'
+    height: 20
   }
 
 ]
@@ -312,43 +296,37 @@ const stairs = [
     x: 375,
     y: -150,
     width: 50,
-    height: 230,
-    color: 'black'
+    height: 230
   },
   { // altura 2 stairs 1
     x: 50,
     y: -350,
     width: 50,
-    height: 230,
-    color: 'black'
+    height: 230
   },
   { // altura 2 stairs 2
     x: 700,
     y: -350,
     width: 50,
-    height: 230,
-    color: 'black'
+    height: 230
   },
   { // altura 3 stairs 1
     x: 375,
     y: -550,
     width: 50,
-    height: 230,
-    color: 'black'
+    height: 230
   },
   { // altura 4 stairs 1
     x: 50,
     y: -750,
     width: 50,
-    height: 230,
-    color: 'black'
+    height: 230
   },
   { // altura 4 stairs 2
     x: 700,
     y: -750,
     width: 50,
-    height: 230,
-    color: 'black'
+    height: 230
   }
 ]
 
@@ -460,12 +438,21 @@ const retryButton = {
   height: 60
 }
 
+// Game Win
+let gameWon = false
+const victoryButton = {
+  x: canvas.width / 2 - 120,
+  y: canvas.height / 2 + 110,
+  width: 240,
+  height: 60
+}
+
 //Disparo
 const shots = []
 const bossShots = []
 
-const hearthImage = new Image()
-hearthImage.src = 'Imagenes/hearth.png'
+const heartImage = new Image()
+heartImage.src = 'Imagenes/heart.png'
 const backgrounImage = new Image()
 backgrounImage.src = 'Imagenes/fondo.png'
 const floorImage = new Image()
@@ -475,7 +462,7 @@ platformImage.src = 'Imagenes/plataforma.png'
 const stairsImage = new Image()
 stairsImage.src = 'Imagenes/escalera.png'
 const greenHeartImage = new Image()
-greenHeartImage.src = 'Imagenes/boss-hearth.png'
+greenHeartImage.src = 'Imagenes/boss-heart.png'
 
 // Detectar teclas presionadas
 document.addEventListener("keydown", (event) => {
@@ -501,7 +488,7 @@ document.addEventListener("keydown", (event) => {
     downPressed = true
   }
 
-  if (event.code === "Space") {
+  if (event.code === "Space" && !gameOver && !gameWon) {
     shots.push({
       x: player.x + player.width / 2,
       y: player.y + player.height / 2,
@@ -536,9 +523,10 @@ document.addEventListener("keyup", (event) => {
   }
 })
 
-// Botón Volver a intentar
+// Botón retry y victory
 canvas.addEventListener('click', (event) => {
-  if (!gameOver) {
+
+  if (!gameOver && !gameWon) {
     return
   }
 
@@ -547,11 +535,17 @@ canvas.addEventListener('click', (event) => {
   const mouseX = event.clientX - rect.left
   const mouseY = event.clientY - rect.top
 
+  let button = retryButton
+
+  if (gameWon) {
+    button = victoryButton
+  }
+
   const insideButton =
-    mouseX >= retryButton.x &&
-    mouseX <= retryButton.x + retryButton.width &&
-    mouseY >= retryButton.y &&
-    mouseY <= retryButton.y + retryButton.height
+    mouseX >= button.x &&
+    mouseX <= button.x + button.width &&
+    mouseY >= button.y &&
+    mouseY <= button.y + button.height
 
   if (insideButton) {
     restartGame()
@@ -579,6 +573,10 @@ function update() {
 
     }
 
+    return
+  }
+
+  if (gameWon) {
     return
   }
 
@@ -785,7 +783,7 @@ function update() {
   const playerIsOnPlatform8 =
     playerPlatform === platform8Left || playerPlatform === platform8Right
 
-  if (playerIsOnPlatform8 && !boss.active) {
+  if (playerIsOnPlatform8 && !boss.active && !boss.defeated) {
     boss.active = true
     boss.state = 'attacking'
     boss.energy = boss.maxEnergy
@@ -793,7 +791,7 @@ function update() {
     boss.shootTimer = 0
   }
 
-  if (boss.active) {
+  if (boss.active && !boss.defeated) {
     const currentTime = performance.now()
 
     if (boss.ascending) {
@@ -902,6 +900,27 @@ function update() {
     if (boss.invulnerableTimer <= 0) {
       boss.hit = false
       boss.invulnerableTimer = 0
+    }
+  }
+
+  // Animación de derrota del boss
+  if (boss.defeated) {
+
+    if (boss.y > boss.defeatTargetY) {
+      boss.y -= boss.defeatSpeed
+    }
+
+    boss.opacity -= boss.fadeSpeed
+
+    if (boss.opacity < 0) {
+      boss.opacity = 0
+    }
+
+    if (
+      boss.y <= boss.defeatTargetY &&
+      boss.opacity <= 0
+    ) {
+      gameWon = true
     }
   }
 
@@ -1088,28 +1107,43 @@ function update() {
     if (collision && boss.active) {
       shot.remove = true
 
-      if (!boss.hit) {
+      if (!boss.hit && !boss.defeated) {
         boss.lifes--
 
         boss.hit = true
         boss.invulnerableTimer = 120
 
-        // Ha perdido su primera vida
+        // Pierde la primera vida
         if (boss.lifes === 2) {
           boss.ascending = true
           boss.targetY = -570
           boss.x = 200
         }
 
-        // Ha perdido su segunda vida
+        // Pierde la segunda vida
         if (boss.lifes === 1) {
           boss.ascending = true
           boss.targetY = -770
           boss.x = 375
         }
 
+        // Pierde la última vida
         if (boss.lifes <= 0) {
           boss.lifes = 0
+
+          boss.defeated = true
+          boss.state = 'stunned'
+          boss.ascending = false
+          boss.active = false
+
+          boss.energy = 0
+          boss.hit = false
+          boss.invulnerableTimer = 0
+
+          boss.defeatTargetY = boss.y - 100
+          boss.opacity = 1
+
+          bossShots.length = 0
         }
       }
     }
@@ -1266,6 +1300,75 @@ function draw() {
     return
   }
 
+  // Dibujae el Gmae Won
+  if (gameWon) {
+    ctx.fillStyle = 'black'
+
+    ctx.fillRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    )
+
+    ctx.fillStyle = 'white'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+
+    ctx.font = 'bold 42px Arial'
+
+    ctx.fillText(
+      'Enhorabuena, has acabado',
+      canvas.width / 2,
+      canvas.height / 2 - 100
+    )
+
+    ctx.fillText(
+      'con el señor tenebroso.',
+      canvas.width / 2,
+      canvas.height / 2 - 45
+    )
+
+    ctx.font = 'bold 32px Arial'
+
+    ctx.fillText(
+      '¡Eres el mago más poderoso!',
+      canvas.width / 2,
+      canvas.height / 2 + 15
+    )
+
+    // Botón
+    ctx.fillStyle = '#444'
+
+    ctx.fillRect(
+      victoryButton.x,
+      victoryButton.y,
+      victoryButton.width,
+      victoryButton.height
+    )
+
+    ctx.strokeStyle = 'white'
+    ctx.lineWidth = 3
+
+    ctx.strokeRect(
+      victoryButton.x,
+      victoryButton.y,
+      victoryButton.width,
+      victoryButton.height
+    )
+
+    ctx.fillStyle = 'white'
+    ctx.font = 'bold 28px Arial'
+
+    ctx.fillText(
+      'Volver a jugar',
+      victoryButton.x + victoryButton.width / 2,
+      victoryButton.y + victoryButton.height / 2
+    )
+
+    return
+  }
+
   // Dibujar el suelo
   ctx.drawImage(
     floorImage,
@@ -1378,6 +1481,9 @@ function draw() {
 
   }
 
+  ctx.save()
+
+  ctx.globalAlpha = boss.opacity
   ctx.fillStyle = boss.color
 
   ctx.fillRect(
@@ -1386,6 +1492,8 @@ function draw() {
     boss.width,
     boss.height
   )
+
+  ctx.restore()
 
   bossShots.forEach((shot) => {
     ctx.fillStyle = shot.color
@@ -1459,7 +1567,7 @@ function draw() {
   // Dibujar vidas
   for (let i = 0; i < player.lifes; i++) {
     ctx.drawImage(
-      hearthImage,
+      heartImage,
       20 + i * 40,
       20,
       30,
@@ -1471,6 +1579,7 @@ function draw() {
 // Funcion reinicio de juego
 function restartGame() {
   // estado del juego
+  gameWon = false
   gameOver = false
 
   // Jugador
@@ -1508,7 +1617,11 @@ function restartGame() {
   boss.hit = false
   boss.invulnerableTimer = 0
   bossShots.length = 0
-  boss.ascending = falseboss.targetY = -370
+  boss.ascending = false
+  boss.targetY = -370
+  boss.defeated = false
+  boss.opacity = 1
+  boss.defeatTargetY = 0
 
   // Campos de fuerza
   forceFields.forEach((forceField) => {

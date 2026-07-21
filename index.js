@@ -500,8 +500,8 @@ const bossShots = []
 
 const heartImage = new Image()
 heartImage.src = 'Imagenes/heart.png'
-const backgrounImage = new Image()
-backgrounImage.src = 'Imagenes/background.png'
+const backgroundImage = new Image()
+backgroundImage.src = 'Imagenes/background.png'
 const floorImage = new Image()
 floorImage.src = 'Imagenes/floor.png'
 const platformImage = new Image()
@@ -557,7 +557,7 @@ document.addEventListener("keydown", (event) => {
     downPressed = true
   }
 
-  if (event.code === "Space" && !gameOver && !gameWon && !player.isCasting) {
+  if (event.code === "Space" && !player.isCasting) {
 
     player.isCasting = true
     player.castingTimer = 48
@@ -1513,7 +1513,7 @@ function draw() {
 
   // Fondo juego
   ctx.drawImage(
-    backgrounImage,
+    backgroundImage,
     0,
     0,
     canvas.width,
@@ -2034,12 +2034,26 @@ function restartGame() {
   })
 }
 
-// Corazón del juego, se ejecuta muchas veces por segundo
-function gameLoop() {
-  update()
+// Corazón del juego: lógica fija a 180 actualizaciones por segundo
+const FIXED_TIME_STEP = 1000 / 180
+
+let previousTime = performance.now()
+let accumulator = 0
+
+function gameLoop(currentTime) {
+  const frameTime = Math.min(currentTime - previousTime, 100)
+
+  previousTime = currentTime
+  accumulator += frameTime
+
+  while (accumulator >= FIXED_TIME_STEP) {
+    update()
+    accumulator -= FIXED_TIME_STEP
+  }
+
   draw()
-  requestAnimationFrame(gameLoop) // Ejecuta el juego cada frame
+  requestAnimationFrame(gameLoop)
 }
 
 // Iniciar juego
-gameLoop()
+requestAnimationFrame(gameLoop)

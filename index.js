@@ -5,7 +5,7 @@ const ctx = canvas.getContext('2d')
 canvas.width = 800
 canvas.height = 700
 
-const CAMERA_UPPER_LIMIT_PERCENTAGE = 0.35
+const CAMERA_UPPER_LIMIT_PERCENTAGE = 0.45
 const CAMERA_LOWER_LIMIT_PERCENTAGE = 0.75
 const CAMERA_VELOCITY = 0.05
 
@@ -22,17 +22,25 @@ const player = {
   x: 50, // Posición horizontal
   y: 630, // Posición vertical
   width: 30, // Ancho del personaje
-  height: 30, // Alto del personaje
+  height: 55, // Alto del personaje
   color: 'red', // Color del personaje
-  speed: 2, // Velocidad de movimiento
+  speed: 1.3, // Velocidad de movimiento
   velocityY: 0, // Velocidad vertical para la gravedad
-  gravity: 0.5, // Fuerza de gravedad
-  jumpForce: -12, // Fuerza de salto
+  gravity: 0.12, // Fuerza de gravedad
+  jumpForce: -6, // Fuerza de salto
   direction: 1, // 1 derecha, -1 izquierda
   lifes: 3,
   hit: false,
   velocityHitX: 0,
-  invulnerableTimer: 0
+  invulnerableTimer: 0,
+
+  // Animación
+  animationRow: 0,
+  currentFrame: 0,
+  frameTimer: 0,
+  frameSpeed: 8,
+  isCasting: false,
+  castingTimer: 0
 }
 
 // Enemigos
@@ -43,12 +51,15 @@ let enemies = [
     width: 30,
     height: 30,
     color: 'blue',
-    speed: 1,
+    speed: 0.75,
     direction: 1, // 1 derecha, -1 izquierda
     changeDirectionTimer: 0,
     hit: false,
     velocityX: 0,
-    velocityY: 0
+    velocityY: 0,
+    currentFrame: 0,
+    frameTimer: 0,
+    frameSpeed: 20
   },
   { // altura 2
     x: 500,
@@ -56,12 +67,15 @@ let enemies = [
     width: 30,
     height: 30,
     color: 'blue',
-    speed: 1,
+    speed: 0.75,
     direction: -1,
     changeDirectionTimer: 0,
     hit: false,
     velocityX: 0,
-    velocityY: 0
+    velocityY: 0,
+    currentFrame: 0,
+    frameTimer: 0,
+    frameSpeed: 20
   },
   { // altura 2
     x: 200,
@@ -69,12 +83,15 @@ let enemies = [
     width: 30,
     height: 30,
     color: 'blue',
-    speed: 1,
+    speed: 0.75,
     direction: 1,
     changeDirectionTimer: 0,
     hit: false,
     velocityX: 0,
-    velocityY: 0
+    velocityY: 0,
+    currentFrame: 0,
+    frameTimer: 0,
+    frameSpeed: 20
   },
   { // altura 4
     x: 200,
@@ -82,12 +99,15 @@ let enemies = [
     width: 30,
     height: 30,
     color: 'blue',
-    speed: 1,
+    speed: 0.75,
     direction: 1,
     changeDirectionTimer: 0,
     hit: false,
     velocityX: 0,
-    velocityY: 0
+    velocityY: 0,
+    currentFrame: 0,
+    frameTimer: 0,
+    frameSpeed: 20
   },
   { // altura 6
     x: 650,
@@ -95,12 +115,15 @@ let enemies = [
     width: 30,
     height: 30,
     color: 'blue',
-    speed: 1,
+    speed: 0.75,
     direction: 1,
     changeDirectionTimer: 0,
     hit: false,
     velocityX: 0,
-    velocityY: 0
+    velocityY: 0,
+    currentFrame: 0,
+    frameTimer: 0,
+    frameSpeed: 20
   },
   { // altura 6
     x: 50,
@@ -108,12 +131,15 @@ let enemies = [
     width: 30,
     height: 30,
     color: 'blue',
-    speed: 1,
+    speed: 0.75,
     direction: 1,
     changeDirectionTimer: 0,
     hit: false,
     velocityX: 0,
-    velocityY: 0
+    velocityY: 0,
+    currentFrame: 0,
+    frameTimer: 0,
+    frameSpeed: 20
   },
   { // altura 7
     x: 200,
@@ -121,12 +147,15 @@ let enemies = [
     width: 30,
     height: 30,
     color: 'blue',
-    speed: 1,
+    speed: 0.75,
     direction: 1,
     changeDirectionTimer: 0,
     hit: false,
     velocityX: 0,
-    velocityY: 0
+    velocityY: 0,
+    currentFrame: 0,
+    frameTimer: 0,
+    frameSpeed: 20
   }
 ]
 
@@ -136,10 +165,10 @@ const boss = {
   width: 50,
   height: 50,
   color: 'purple',
-  speed: 1.5,
+  speed: 1.1,
   active: false,
   shootTimer: 0,
-  shootInterval: 90,
+  shootInterval: 150,
   state: 'attacking',
   energy: 100,
   maxEnergy: 100,
@@ -157,7 +186,16 @@ const boss = {
   defeatTargetY: 0,
   opacity: 1,
   defeatSpeed: 0.5,
-  fadeSpeed: 0.008
+  fadeSpeed: 0.008,
+  direction: 1,
+  animationRow: 0,
+  currentFrame: 0,
+  frameTimer: 0,
+  walkFrameSpeed: 24,
+  shootFrameSpeed: 14,
+  isShooting: false,
+  shootAnimationTimer: 0,
+  previousAnimationRow: 0
 }
 
 const initialEnemies = structuredClone(enemies)
@@ -474,6 +512,22 @@ const greenHeartImage = new Image()
 greenHeartImage.src = 'Imagenes/boss-heart.png'
 const startScreenImage = new Image()
 startScreenImage.src = 'Imagenes/front-page.png'
+const wizardRight = new Image()
+wizardRight.src = 'Imagenes/wizard-right.png'
+const wizardLeft = new Image()
+wizardLeft.src = 'Imagenes/wizard-left.png'
+const enemyLeft = new Image()
+enemyLeft.src = 'Imagenes/enemy-left.png'
+const enemyRight = new Image()
+enemyRight.src = 'Imagenes/enemy-right.png'
+const bossLeft = new Image()
+bossLeft.src = 'Imagenes/boss-left.png'
+const bossRight = new Image()
+bossRight.src = 'Imagenes/boss-right.png'
+const playerShotImage = new Image()
+playerShotImage.src = 'Imagenes/player-shot.png'
+const bossShotImage = new Image()
+bossShotImage.src = 'Imagenes/boss-shot.png'
 
 // Detectar teclas presionadas
 document.addEventListener("keydown", (event) => {
@@ -503,15 +557,20 @@ document.addEventListener("keydown", (event) => {
     downPressed = true
   }
 
-  if (event.code === "Space" && !gameOver && !gameWon) {
+  if (event.code === "Space" && !gameOver && !gameWon && !player.isCasting) {
+
+    player.isCasting = true
+    player.castingTimer = 48
+    player.currentFrame = 0
+    player.frameTimer = 0
+
     shots.push({
       x: player.x + player.width / 2,
-      y: player.y + player.height / 2,
-      width: 12,
-      height: 12,
-      speed: 3,
+      y: player.y + 12,
+      width: 18,
+      height: 18,
+      speed: 2,
       direction: player.direction,
-      color: 'gold',
       distance: 0,
       maxDistance: 150,
       remove: false
@@ -832,6 +891,46 @@ function update() {
     boss.shootTimer = 0
   }
 
+  // ANIMACIÓN DEL JUGADOR
+
+  const isWalking = leftPressed || rightPressed
+  const isJumping = !canJump && !onStairs
+
+  if (player.isCasting) {
+    player.animationRow = 1
+    player.castingTimer--
+
+    if (player.castingTimer <= 0) {
+      player.isCasting = false
+      player.castingTimer = 0
+      player.currentFrame = 0
+    }
+
+  } else if (isJumping) {
+    player.animationRow = 2
+
+  } else {
+    player.animationRow = 0
+  }
+
+  if (player.isCasting || isJumping || isWalking) {
+    player.frameTimer++
+
+    if (player.frameTimer >= player.frameSpeed) {
+      player.currentFrame++
+
+      if (player.currentFrame >= 8) {
+        player.currentFrame = 0
+      }
+
+      player.frameTimer = 0
+    }
+
+  } else {
+    player.currentFrame = 0
+    player.frameTimer = 0
+  }
+
   if (boss.active && !boss.defeated) {
     const currentTime = performance.now()
 
@@ -862,10 +961,12 @@ function update() {
         // Movimiento horizontal del boss
         if (player.x < boss.x) {
           boss.x -= boss.speed
+          boss.direction = -1
         }
 
         if (player.x > boss.x) {
           boss.x += boss.speed
+          boss.direction = 1
         }
 
         // Límites horizontales
@@ -893,13 +994,17 @@ function update() {
         boss.shootTimer--
 
         if (boss.shootTimer <= 0) {
+          boss.isShooting = true
+          boss.shootAnimationTimer = 48
+          boss.currentFrame = 0
+          boss.frameTimer = 0
+
           bossShots.push({
-            x: boss.x + boss.width / 2 - 6,
-            y: boss.y + boss.height,
-            width: 12,
-            height: 18,
-            speed: 4,
-            color: 'red',
+            x: boss.x + boss.width / 2 - 18,
+            y: boss.y + 35,
+            width: 36,
+            height: 36,
+            speed: 1,
             remove: false
           })
 
@@ -910,6 +1015,12 @@ function update() {
           boss.state = 'stunned'
           boss.energy = 0
           boss.stateStartTime = currentTime
+          boss.isShooting = false
+          boss.shootAnimationTimer = 0
+          boss.animationRow = 0
+          boss.previousAnimationRow = 0
+          boss.currentFrame = 0
+          boss.frameTimer = 0
         }
 
       } else if (boss.state === 'stunned') {
@@ -934,6 +1045,58 @@ function update() {
     }
   }
 
+  // ANIMACIÓN DEL BOSS
+  if (boss.active && !boss.defeated) {
+
+    // Durante el stun se queda quieto en el primer frame
+    if (boss.state === 'stunned' || boss.ascending) {
+      boss.isShooting = false
+      boss.shootAnimationTimer = 0
+      boss.animationRow = 0
+      boss.previousAnimationRow = 0
+      boss.currentFrame = 0
+      boss.frameTimer = 0
+
+    } else {
+      // Durante el ataque
+      if (boss.isShooting) {
+        boss.animationRow = 1
+        boss.shootAnimationTimer--
+
+        if (boss.shootAnimationTimer <= 0) {
+          boss.isShooting = false
+          boss.shootAnimationTimer = 0
+        }
+
+      } else {
+        boss.animationRow = 0
+      }
+
+      // Reiniciar los frames al cambiar de fila
+      if (boss.animationRow !== boss.previousAnimationRow) {
+        boss.currentFrame = 0
+        boss.frameTimer = 0
+        boss.previousAnimationRow = boss.animationRow
+      }
+
+      const currentFrameSpeed =
+        boss.animationRow === 1
+          ? boss.shootFrameSpeed
+          : boss.walkFrameSpeed
+
+      boss.frameTimer++
+
+      if (boss.frameTimer >= currentFrameSpeed) {
+        boss.currentFrame++
+
+        if (boss.currentFrame >= 6) {
+          boss.currentFrame = 0
+        }
+
+        boss.frameTimer = 0
+      }
+    }
+  }
   // Invulnerabilidad del boss
   if (boss.hit) {
     boss.invulnerableTimer--
@@ -1020,6 +1183,18 @@ function update() {
 
   enemies.forEach(enemy => {
 
+    enemy.frameTimer++
+
+    if (enemy.frameTimer >= enemy.frameSpeed) {
+      enemy.currentFrame++
+
+      if (enemy.currentFrame >= 6) {
+        enemy.currentFrame = 0
+      }
+
+      enemy.frameTimer = 0
+    }
+
     if (enemy.hit) {
       enemy.x += enemy.velocityX
       enemy.y += enemy.velocityY
@@ -1042,9 +1217,11 @@ function update() {
 
       if (player.x < enemy.x) {
         enemy.x -= enemy.speed
+        enemy.direction = -1
       }
       else if (player.x > enemy.x) {
         enemy.x += enemy.speed
+        enemy.direction = 1
       }
 
     } else {
@@ -1525,20 +1702,53 @@ function draw() {
     Math.floor(player.invulnerableTimer / 5) % 2 === 0
 
   if (visible) {
+    const playerImage =
+      player.direction === 1
+        ? wizardRight
+        : wizardLeft
 
-    ctx.fillStyle = player.color
+    const FRAME_COLUMNS = 8
+    const FRAME_ROWS = 3
 
-    ctx.fillRect(
-      player.x,
-      player.y - cameraY,
-      player.width,
-      player.height
+    const frameWidth =
+      playerImage.width / FRAME_COLUMNS
+
+    const frameHeight =
+      playerImage.height / FRAME_ROWS
+
+    const FRAME_PADDING = 2
+
+    const spriteWidth = 60
+    const spriteHeight = 80
+
+    const spriteX =
+      player.x + player.width / 2 - spriteWidth / 2
+
+    const SPRITE_Y_OFFSET = 6
+
+
+    const spriteY =
+      player.y + player.height - spriteHeight - cameraY + SPRITE_Y_OFFSET
+
+    ctx.drawImage(
+      playerImage,
+
+      // Parte que recortamos del sprite
+      player.currentFrame * frameWidth + FRAME_PADDING,
+      player.animationRow * frameHeight + FRAME_PADDING,
+      frameWidth - FRAME_PADDING * 2,
+      frameHeight - FRAME_PADDING * 2,
+
+      // Lugar donde se dibuja
+      spriteX,
+      spriteY,
+      spriteWidth,
+      spriteHeight
     )
-
   }
   shots.forEach((shot) => {
-    ctx.fillStyle = shot.color
-    ctx.fillRect(
+    ctx.drawImage(
+      playerShotImage,
       shot.x,
       shot.y - cameraY,
       shot.width,
@@ -1547,78 +1757,154 @@ function draw() {
   })
 
   // Dibujar enemigos
-  enemies.forEach(enemy => {
-    ctx.fillStyle = enemy.color
+  enemies.forEach((enemy) => {
+    const enemyImage =
+      enemy.direction === 1
+        ? enemyRight
+        : enemyLeft
 
-    ctx.fillRect(
-      enemy.x,
-      enemy.y - cameraY,
-      enemy.width,
-      enemy.height
+    const FRAME_COLUMNS = 6
+    const frameWidth = enemyImage.width / FRAME_COLUMNS
+
+    // Zona real donde está dibujado el enemigo
+    const sourceY = 115
+    const sourceHeight = 130
+
+    const spriteWidth = 55
+    const spriteHeight = 65
+    const SPRITE_Y_OFFSET = 6
+
+    const spriteX =
+      enemy.x + enemy.width / 2 - spriteWidth / 2
+
+    const spriteY =
+      enemy.y +
+      enemy.height -
+      spriteHeight -
+      cameraY +
+      SPRITE_Y_OFFSET
+
+    ctx.drawImage(
+      enemyImage,
+
+      // Recorte del frame
+      enemy.currentFrame * frameWidth,
+      sourceY,
+      frameWidth,
+      sourceHeight,
+
+      // Posición y tamaño en el juego
+      spriteX,
+      spriteY,
+      spriteWidth,
+      spriteHeight
     )
   })
 
   // Dibujar el boss
-  const heartSize = 18
-  const heartSpacing = 22
-
-  const totalWidth =
-    (boss.lifes - 1) * heartSpacing + heartSize
-
-  const startX =
-    boss.x + boss.width / 2 - totalWidth / 2
-
-  for (let i = 0; i < boss.lifes; i++) {
-
-    ctx.drawImage(
-      greenHeartImage,
-      startX + i * heartSpacing,
-      boss.y - cameraY - 45,
-      heartSize,
-      heartSize
-    )
-
-  }
 
   ctx.save()
 
   ctx.globalAlpha = boss.opacity
-  ctx.fillStyle = boss.color
 
-  ctx.fillRect(
-    boss.x,
-    boss.y - cameraY,
-    boss.width,
-    boss.height
+  const bossImage =
+    boss.direction === 1
+      ? bossRight
+      : bossLeft
+
+  const FRAME_COLUMNS = 6
+
+  const frameWidth =
+    bossImage.width / FRAME_COLUMNS
+
+  const spriteWidth = 85
+  const spriteHeight = 90
+  const SPRITE_Y_OFFSET = 5
+
+  const spriteX =
+    boss.x +
+    boss.width / 2 -
+    spriteWidth / 2
+
+  const spriteY =
+    boss.y +
+    boss.height -
+    spriteHeight -
+    cameraY +
+    SPRITE_Y_OFFSET
+
+  let sourceY
+  let sourceHeight
+
+  const FRAME_PADDING_X = 6
+
+  if (boss.animationRow === 0) {
+    // Primera fila: caminar
+    sourceY = 45
+    sourceHeight = 125
+  } else {
+    // Segunda fila: disparar
+    sourceY = 204
+    sourceHeight = 165
+  }
+
+  ctx.drawImage(
+    bossImage,
+
+    boss.currentFrame * frameWidth + FRAME_PADDING_X,
+    sourceY,
+    frameWidth - FRAME_PADDING_X * 2,
+    sourceHeight,
+
+    spriteX,
+    spriteY,
+    spriteWidth,
+    spriteHeight
   )
 
   ctx.restore()
 
-  bossShots.forEach((shot) => {
-    ctx.fillStyle = shot.color
+  // Vidas encima del boss
+  if (boss.active && spriteY + spriteHeight > 0) {
+    const heartSize = 18
+    const heartSpacing = 22
 
-    ctx.fillRect(
-      shot.x,
-      shot.y - cameraY,
-      shot.width,
-      shot.height
-    )
-  })
+    const totalHeartsWidth =
+      (boss.lifes - 1) * heartSpacing + heartSize
 
+    const heartsX =
+      boss.x +
+      boss.width / 2 -
+      totalHeartsWidth / 2
+
+    const heartsY = spriteY - 38
+
+    for (let i = 0; i < boss.lifes; i++) {
+      ctx.drawImage(
+        greenHeartImage,
+        heartsX + i * heartSpacing,
+        heartsY,
+        heartSize,
+        heartSize
+      )
+    }
+  }
+
+  // Barra de energía
   if (boss.active) {
     const energyBarWidth = 70
     const energyBarHeight = 8
 
     const energyBarX =
-      boss.x + boss.width / 2 - energyBarWidth / 2
+      boss.x +
+      boss.width / 2 -
+      energyBarWidth / 2
 
-    const energyBarY =
-      boss.y - cameraY - 18
+    const energyBarY = spriteY - 12
 
     const energyPercentage =
       boss.energy / boss.maxEnergy
 
-    // Fondo de la barra
     ctx.fillStyle = 'black'
 
     ctx.fillRect(
@@ -1628,7 +1914,6 @@ function draw() {
       energyBarHeight + 4
     )
 
-    // Barra vacía
     ctx.fillStyle = '#555'
 
     ctx.fillRect(
@@ -1638,7 +1923,6 @@ function draw() {
       energyBarHeight
     )
 
-    // Energía
     ctx.fillStyle =
       boss.state === 'stunned'
         ? 'cyan'
@@ -1651,6 +1935,16 @@ function draw() {
       energyBarHeight
     )
   }
+
+  bossShots.forEach((shot) => {
+    ctx.drawImage(
+      bossShotImage,
+      shot.x,
+      shot.y - cameraY,
+      shot.width,
+      shot.height
+    )
+  })
 
   // Dibujar la plataformas
   platforms.forEach((platform) => {
@@ -1690,6 +1984,11 @@ function restartGame() {
   player.hit = false
   player.invulnerableTimer = 0
   player.lifes = 3
+  player.animationRow = 0
+  player.currentFrame = 0
+  player.frameTimer = 0
+  player.isCasting = false
+  player.castingTimer = 0
 
   // Cámara
   cameraY = 0
@@ -1721,6 +2020,13 @@ function restartGame() {
   boss.defeated = false
   boss.opacity = 1
   boss.defeatTargetY = 0
+  boss.direction = 1
+  boss.animationRow = 0
+  boss.previousAnimationRow = 0
+  boss.currentFrame = 0
+  boss.frameTimer = 0
+  boss.isShooting = false
+  boss.shootAnimationTimer = 0
 
   // Campos de fuerza
   forceFields.forEach((forceField) => {
